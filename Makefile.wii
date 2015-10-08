@@ -29,12 +29,13 @@ INCLUDES	:=	$(DEVKITPPC)/libogc/include \
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
+# Note that we MUST USE -fno-merge-constants, because the compiler generates crap otherwise.
 
 CFLAGS	=		$(MACHDEP) $(INCLUDE) \
-			-g -O2 -Wcast-align -fno-merge-constants -fstrict-aliasing -fsingle-precision-constant \
-			-DGXQUAKE -DNQ_HACK
+			-g -O2 -Wall -Wcast-align -fno-merge-constants -fno-strict-aliasing -fsingle-precision-constant\
+			-DGXQUAKE
 
-CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
+CXXFLAGS = $(CFLAGS) -Weffc++ -fno-exceptions -fno-rtti
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
