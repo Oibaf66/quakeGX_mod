@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include <ogc/lwp_watchdog.h>
+#include <wiiuse/wpad.h>
+
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
 
@@ -29,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 ===============================================================================
 */
+
+extern u64 time_wpad_off_millisec;
+extern int rumble_on;
+extern cvar_t  rumble;
 
 char *PF_VarString (int	first)
 {
@@ -1831,6 +1838,27 @@ void PF_Fixme (void)
 	PR_RunError ("unimplemented bulitin");
 }
 
+/*
+===============
+PF_rumble
+
+void(float time) rumble
+
+added for wii rumble
+===============
+*/
+void PF_rumble (void)
+{
+	if (!rumble.value) return;
+	u64 rumble_time;
+	rumble_time = G_FLOAT(OFS_PARM0);
+	
+	//it switches rumble on for rumble_time milliseconds  
+	WPAD_Rumble(0, TRUE);
+	rumble_on=1;
+	time_wpad_off_millisec	= ticks_to_millisecs(gettime()) + rumble_time;
+	
+}
 
 
 builtin_t pr_builtin[] =
@@ -1931,7 +1959,8 @@ PF_precache_model,
 PF_precache_sound,		// precache_sound2 is different only for qcc
 PF_precache_file,
 
-PF_setspawnparms
+PF_setspawnparms,
+PF_rumble
 };
 
 builtin_t *pr_builtins = pr_builtin;
