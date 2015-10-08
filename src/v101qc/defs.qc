@@ -683,6 +683,7 @@ string(string s) precache_file2		= #77;		// registered version only
 void(entity e) setspawnparms		= #78;		// set parm1... to the
 												// values at level start
 												// for coop respawn
+void(float rumble_time) rumble = #79; //new function	
 
 //============================================================================
 

@@ -1168,9 +1168,13 @@ void() PlayerPostThink =
 			T_Damage (self, world, world, 5); 
 			sound (self, CHAN_VOICE, "player/land2.wav", 1, ATTN_NORM);
 			self.deathtype = "falling";
+			rumble(100);
 		}
 		else
+		{
 			sound (self, CHAN_VOICE, "player/land.wav", 1, ATTN_NORM);
+			rumble(100);
+		}
 
 		self.jump_flag = 0;
 	}

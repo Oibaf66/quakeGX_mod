@@ -284,6 +284,7 @@ void() W_FireShotgun =
 	local vector dir;
 
 	sound (self, CHAN_WEAPON, "weapons/guncock.wav", 1, ATTN_NORM);	
+	rumble(100);	
 
 	self.punchangle_x = -2;
 	
@@ -309,6 +310,7 @@ void() W_FireSuperShotgun =
 	}
 		
 	sound (self ,CHAN_WEAPON, "weapons/shotgn2.wav", 1, ATTN_NORM);	
+	rumble(100);	
 
 	self.punchangle_x = -4;
 	
@@ -395,6 +397,7 @@ void() W_FireRocket =
 	self.currentammo = self.ammo_rockets = self.ammo_rockets - 1;
 	
 	sound (self, CHAN_WEAPON, "weapons/sgun1.wav", 1, ATTN_NORM);
+	rumble(100);
 
 	self.punchangle_x = -2;
 
@@ -501,6 +504,7 @@ void() W_FireLightning =
 	if (self.t_width < time)
 	{
 		sound (self, CHAN_WEAPON, "weapons/lhit.wav", 1, ATTN_NORM);
+	rumble(100);
 		self.t_width = time + 0.6;
 	}
 	self.punchangle_x = -2;
@@ -567,6 +571,7 @@ void() W_FireGrenade =
 	self.currentammo = self.ammo_rockets = self.ammo_rockets - 1;
 	
 	sound (self, CHAN_WEAPON, "weapons/grenade.wav", 1, ATTN_NORM);
+	rumble(100);
 
 	self.punchangle_x = -2;
 
@@ -644,6 +649,7 @@ void() W_FireSuperSpikes =
 	local entity	old;
 	
 	sound (self, CHAN_WEAPON, "weapons/spike2.wav", 1, ATTN_NORM);
+	rumble(50);
 	self.attack_finished = time + 0.2;
 	self.currentammo = self.ammo_nails = self.ammo_nails - 2;
 	dir = aim (self, 1000);
@@ -675,6 +681,7 @@ void(float ox) W_FireSpikes =
 	}
 
 	sound (self, CHAN_WEAPON, "weapons/rocket1i.wav", 1, ATTN_NORM);
+	rumble(50);
 	self.attack_finished = time + 0.2;
 	self.currentammo = self.ammo_nails = self.ammo_nails - 1;
 	dir = aim (self, 1000);
@@ -1150,6 +1157,80 @@ void() CycleWeaponCommand =
 
 /*
 ============
+CycleWeaponReverseCommand
+
+Go to the prev weapon with ammo
+============
+*/
+void() CycleWeaponReverseCommand =
+{
+	local	float	it, am;
+	
+	it = self.items;
+	self.impulse = 0;
+
+	while (1)
+	{
+		am = 0;
+
+		if (self.weapon == IT_LIGHTNING)
+		{
+			self.weapon = IT_ROCKET_LAUNCHER;
+			if (self.ammo_rockets < 1)
+				am = 1;
+		}
+		else if (self.weapon == IT_ROCKET_LAUNCHER)
+		{
+			self.weapon = IT_GRENADE_LAUNCHER;
+			if (self.ammo_rockets < 1)
+				am = 1;
+		}
+		else if (self.weapon == IT_GRENADE_LAUNCHER)
+		{
+			self.weapon = IT_SUPER_NAILGUN;
+			if (self.ammo_nails < 2)
+				am = 1;
+		}
+		else if (self.weapon == IT_SUPER_NAILGUN)
+		{
+			self.weapon = IT_NAILGUN;
+			if (self.ammo_nails < 1)
+				am = 1;
+		}
+		else if (self.weapon == IT_NAILGUN)
+		{
+			self.weapon = IT_SUPER_SHOTGUN;
+			if (self.ammo_shells < 2)
+				am = 1;
+		}		
+		else if (self.weapon == IT_SUPER_SHOTGUN)
+		{
+			self.weapon = IT_SHOTGUN;
+			if (self.ammo_shells < 1)
+				am = 1;
+		}
+		else if (self.weapon == IT_SHOTGUN)
+		{
+			self.weapon = IT_AXE;
+		}
+		else if (self.weapon == IT_AXE)
+		{
+			self.weapon = IT_LIGHTNING;
+			if (self.ammo_cells < 1)
+				am = 1;
+		}
+	
+		if ( (it & self.weapon) && am == 0)
+		{
+			W_SetCurrentAmmo ();
+			return;
+		}
+	}
+
+};
+
+/*
+============
 ServerflagsCommand
 
 Just for development
@@ -1187,6 +1268,8 @@ void() ImpulseCommands =
 		CycleWeaponCommand ();
 	if (self.impulse == 11)
 		ServerflagsCommand ();
+	if (self.impulse == 12)
+		CycleWeaponReverseCommand ();
 
 	if (self.impulse == 255)
 		QuadCheat ();
