@@ -1,5 +1,6 @@
 /*
 Copyright (C) 2008 Eluan Costa Miranda
+Copyright (C) 2015 Fabio Olimpieri
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -40,6 +41,8 @@ cvar_t		gl_max_size = {"gl_max_size", "1024"};
 gltexture_t	gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
+extern int texture_memory;
+
 heap_cntrl texture_heap;
 void *texture_heap_ptr;
 u32 texture_heap_size;
@@ -49,8 +52,8 @@ void R_InitTextureHeap (void)
 	u32 level, size;
 
 	_CPU_ISR_Disable(level);
-	texture_heap_ptr = SYS_GetArena2Lo();
-	texture_heap_size = 30 * 1024 * 1024;
+	texture_heap_ptr = (void*)(((u32)SYS_GetArena2Lo()+31)&0xffffffe0);
+	texture_heap_size = texture_memory * 1024 * 1024;
 	if ((u32)texture_heap_ptr + texture_heap_size > (u32)SYS_GetArena2Hi())
 	{
 		_CPU_ISR_Restore(level);
@@ -472,20 +475,43 @@ GL_Upload8
 void GL_Upload8 (gltexture_t *destination, byte *data, int width, int height,  qboolean mipmap, qboolean alpha)
 {
 	int			i, s;
+	qboolean	noalpha;
+	int			p;
+
 
 	s = width*height;
 
+	// if there are no transparent pixels, make it a 3 component
+	// texture even if it was specified as otherwise
+	if (alpha)
+	{
+		noalpha = TRUE;
+		for (i=0 ; i<s ; i++)
+		{
+			p = data[i];
+			if (p == 255)
+				noalpha = FALSE;
+			trans[i] = d_8to24table[p];
+		}
+
+		if (alpha && noalpha)
+			alpha = FALSE;
+	}
+	else
+	{
 	if (s&3)
 		Sys_Error ("GL_Upload8: s&3");
 
 	for (i = 0; i < s; i += 4)
-	{
+		{
 		trans[i] = d_8to24table[data[i]];
 		trans[i + 1] = d_8to24table[data[i + 1]];
 		trans[i + 2] = d_8to24table[data[i + 2]];
 		trans[i + 3] = d_8to24table[data[i + 3]];
+		}
+	
 	}
-
+		
 	GL_Upload32 (destination, trans, width, height, mipmap, alpha);
 }
 

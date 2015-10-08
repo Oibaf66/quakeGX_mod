@@ -2,6 +2,7 @@
 Quake GameCube port.
 Copyright (C) 2007 Peter Mackay
 Copyright (C) 2008 Eluan Miranda
+Copyright (C) 2015 Fabio Olimpieri
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -71,6 +72,10 @@ GXRModeObj	*rmode			= 0;
 
 int want_to_reset = 0;
 int want_to_shutdown = 0;
+int texture_memory = 30;
+u64 time_wpad_off_millisec = 0;
+u64 current_time;
+int rumble_on = 0;
 
 void reset_system(void)
 {
@@ -87,7 +92,7 @@ namespace quake
 	namespace main
 	{
 		// Set up the heap.
-		static const size_t	heap_size	= 19 * 1024 * 1024;
+		static size_t	heap_size	= 19 * 1024 * 1024;
 		static char		*heap;
 
 		inline void *align32 (void *p)
@@ -147,7 +152,10 @@ namespace quake
 		static void check_pak_file_exists()
 		{
 			int handle = -1;
-			if (Sys_FileOpenRead(QUAKE_WII_BASEDIR"/id1/pak0.pak", &handle) < 0)
+			char quake_pack[64];
+			strcpy(quake_pack, QUAKE_WII_BASEDIR);
+			strcat(quake_pack,"/id1/pak0.pak");
+			if (Sys_FileOpenRead(quake_pack, &handle) < 0)
 			{
 				Sys_Error(
 					QUAKE_WII_BASEDIR"/ID1/PAK0.PAK was not found.\n"
@@ -188,48 +196,53 @@ namespace quake
 		{
 
 			u32 cursor = 0;
-			u32 cursor_modulus = 4;
+			u32 cursor_modulus = 6;
 
 			// option 0
 			u32 missionpack_selected = 0;
 			u32 missionpack_have = 1; // bitmask 1 = standard, 2 = scourge of armagon (hipnotic), 4 = dissolution of eternity (rogue)
 			const char *missionpack_names[3] = {"Standard Quake", "Scourge of Armagon", "Dissolution of Eternity" };
-
+			int heap_memory = 19;
 			// option 1
 			u32 mods_selected = 0;
 			std::vector<std::string> mods_names;
 
 			// option 2
-			u32 network_disable = 0;
+			u32 network_enable = 0;
 
 			// option 3
 			u32 listen_players = 4;
 
 			// find mods / mission packs, some code from snes9x-gx 1.51
-			mods_names.push_back("None");
+			mods_names.push_back("0 None"); //To be sure that None is at fisrt place in the list
 
-			DIR_ITER *fatdir;
-			char filename[MAXPATHLEN];
+			DIR *fatdir;
+			struct dirent *dir;
 			struct stat filestat;
+			char filename[128];
 
-			fatdir = diropen(QUAKE_WII_BASEDIR);
+			fatdir = opendir(QUAKE_WII_BASEDIR);
 			if (!fatdir)
 				Sys_Error("Error opening %s for read.\n", QUAKE_WII_BASEDIR);
 
-			while (dirnext(fatdir, filename, &filestat) == 0)
+			while ((dir = readdir(fatdir)) != NULL)
 			{
-				if ((filestat.st_mode & _IFDIR) && strcmp(filename, ".") && strcmp(filename, "..") && strcasecmp(filename, "ID1"))
+				sprintf(filename, "%s/%s", QUAKE_WII_BASEDIR,dir->d_name);
+				
+				if (stat (filename, &filestat)) continue;	
+			
+				if ((filestat.st_mode & S_IFDIR) && strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..") && strcasecmp(dir->d_name, "id1"))
 				{
-					if(!strcasecmp(filename, "hipnotic"))
+					if(!strcasecmp(dir->d_name, "hipnotic"))
 						missionpack_have |= 2;
-					else if(!strcasecmp(filename, "rogue"))
+					else if(!strcasecmp(dir->d_name, "rogue"))
 						missionpack_have |= 4;
 					else
-						mods_names.push_back(filename);
+						mods_names.push_back(dir->d_name);
 				}
 			}
 
-			dirclose(fatdir);
+			closedir(fatdir);
 	
 			sort(mods_names.begin(), mods_names.end());
 
@@ -249,7 +262,7 @@ namespace quake
 
 				printf("\x1b[2;0H");
 				// ELUTODO: use CONF module to configure certain settings according to the wii's options
-				printf("\n\n\n\n\n\n     If the Nunchuk isn't detected, please reconnect it to the wiimote.\n     Oh, and don't forget to put your wrist wrap! :)\n\n");
+				//printf("\n\n\n\n\n\n     If the Nunchuk isn't detected, please reconnect it to the wiimote.\n     Oh, and don't forget to put your wrist wrap! :)\n\n");
 
 				if (up)
 					cursor = (cursor - 1 + cursor_modulus) % cursor_modulus;
@@ -266,9 +279,19 @@ namespace quake
 							mods_selected = (mods_selected - 1 + mods_names.size()) % mods_names.size();
 							break;
 						case 2:
-							network_disable = !network_disable;
+							heap_memory--;
+							if (heap_memory < 16)
+							heap_memory = 16;
 							break;
 						case 3:
+							texture_memory--;
+							if (texture_memory < 16)
+							texture_memory = 16;
+							break;	
+						case 4:
+							network_enable = !network_enable;
+							break;
+						case 5:
 							listen_players--;
 							if (listen_players < 4)
 								listen_players = 4;
@@ -289,9 +312,17 @@ namespace quake
 							mods_selected = (mods_selected + 1) % mods_names.size();
 							break;
 						case 2:
-							network_disable = !network_disable;
+							if ((heap_memory < 35)&&(heap_memory+texture_memory<51))
+							heap_memory++;
 							break;
 						case 3:
+							if ((texture_memory < 35)&&(heap_memory+texture_memory<51))
+							texture_memory++;
+							break;	
+						case 4:
+							network_enable = !network_enable;
+							break;
+						case 5:
 							listen_players++;
 							if (listen_players > 16)
 								listen_players = 16;
@@ -317,18 +348,25 @@ namespace quake
 
 				const u32 mods_maxprintsize = 32;
 				char mods_printvar[mods_maxprintsize];
-				strncpy(mods_printvar, mods_names[mods_selected].c_str(), mods_maxprintsize);
+				if (!strcmp(mods_names[mods_selected].c_str(),"0 None")) strncpy(mods_printvar, mods_names[mods_selected].c_str()+2, mods_maxprintsize);
+				else strncpy(mods_printvar, mods_names[mods_selected].c_str(), mods_maxprintsize);
 				size_t mods_printsize = strlen(mods_printvar);
 				u32 i;
+
+				//fill the string with spaces at the end of the name
 				for (i = mods_printsize; i < mods_maxprintsize - 1; i++)
 					mods_printvar[i] = ' ';
 				mods_printvar[i] = '\0';
 
 				printf("     %c Mod:               %s\n", cursor == 1 ? '>' : ' ', mods_printvar);
+						
+				printf("     %c Heap Memory:       %d MB\n", cursor == 2 ? '>' : ' ', heap_memory);
+				
+				printf("     %c Texture Memory:    %d MB\n", cursor == 3 ? '>' : ' ', texture_memory);
+				
+				printf("     %c Enable Network:    %s\n", cursor == 4 ? '>' : ' ', network_enable ? "yes" : "no ");
 
-				printf("     %c Disable Network:   %s\n", cursor == 2 ? '>' : ' ', network_disable ? "yes" : "no ");
-
-				printf("     %c Max Network Slots: %u   \n", cursor == 3 ? '>' : ' ', listen_players);
+				printf("     %c Max Network Slots: %u   \n", cursor == 5 ? '>' : ' ', listen_players);
 
 				printf("\n\n\n     Network is experimental, may fail randomly.\n     Please activate it to use bots.\n");
 
@@ -337,6 +375,8 @@ namespace quake
 			}
 
 			// Initialise the Common module.
+			heap_size	= heap_memory * 1024 * 1024;
+			
 			add_parm("Quake");
 #if CONSOLE_DEBUG
 			add_parm("-condebug");
@@ -365,7 +405,8 @@ namespace quake
 				add_parm(mods_names[mods_selected].c_str()); // ELUTODO: bad thing to do?
 			}
 
-			if (network_disable)
+
+			if (!network_enable)
 			{
 				add_parm("-noudp");
 			}
@@ -444,6 +485,16 @@ namespace quake
 				const u64		time_delta		= current_time - last_time;
 				const double	seconds	= time_delta * (0.001f / TB_TIMER_CLOCK);
 				last_time = current_time;
+				
+				const u64 current_time_millisec = ticks_to_millisecs(current_time);
+				//Con_Printf ("time: %f \n", current_time_millisec);
+				//Con_Printf ("time off: %f \n", time_wpad_off_millisec);
+				
+				if (rumble_on&&(current_time_millisec > time_wpad_off_millisec)) 
+				{
+					WPAD_Rumble(0, FALSE);
+					rumble_on = 0;
+				}
 
 				// Run the frame.
 				Host_Frame(seconds);

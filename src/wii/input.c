@@ -2,6 +2,7 @@
 Quake GameCube port.
 Copyright (C) 2007 Peter Mackay
 Copyright (C) 2008 Eluan Miranda
+Copyright (C) 2015 Fabio Olimpieri
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	osk_repeat_delay = {"osk_repeat_delay","0.25"};
 cvar_t	kb_repeat_delay = {"kb_repeat_delay","0.1"};
+cvar_t	joy_as_arrows = {"joy_as_arrows","0"};
+cvar_t  rumble = {"rumble","1"};
 
 char keycode_normal[256] = { 
 	'\0', '\0', '\0', '\0', //0-3
@@ -114,6 +117,12 @@ bool wiimote_connected = TRUE;
 bool nunchuk_connected = FALSE;
 bool classic_connected = FALSE;
 bool keyboard_connected = FALSE;
+
+typedef enum  {LEFT, CENTER_X, RIGHT} stick_x_st_t;
+typedef enum   {UP, CENTER_Y, DOWN} stick_y_st_t;
+
+stick_x_st_t stick_x_st = CENTER_X;
+stick_y_st_t stick_y_st = CENTER_Y;
 
 u16 pad_previous_keys = 0x0000;
 u16 pad_keys = 0x0000;
@@ -257,6 +266,9 @@ void IN_Init (void)
 
 	Cvar_RegisterVariable(&osk_repeat_delay);
 	Cvar_RegisterVariable(&kb_repeat_delay);
+	
+	Cvar_RegisterVariable (&joy_as_arrows);
+	Cvar_RegisterVariable (&rumble);
 
 	keycode_normal[225] = K_LSHIFT;
 	keycode_normal[229] = K_RSHIFT;
@@ -277,6 +289,7 @@ void IN_Commands (void)
 
 	keyboard_event KB_event;
 
+	// Usb keyboard managment 
 	while(KEYBOARD_GetEvent(&KB_event) > 0)
 	{
 		switch(KB_event.type)
@@ -315,6 +328,9 @@ void IN_Commands (void)
 		}
 	}
 
+	//It manages the nunchunk or classic controller connection
+	//It assigns the pressed buttons to wpad_keys and to pad_keys
+	
 	u32 exp_type;
 	if ( WPAD_Probe(WPAD_CHAN_0, &exp_type) != 0 )
 		exp_type = WPAD_EXP_NONE;
@@ -344,6 +360,7 @@ void IN_Commands (void)
 	}
 
 	else
+	//Here neither the classic controller nor the nuncunk are connected
 	{
 		if(classic_connected || nunchuk_connected)
 			wpad_previous_keys = 0x0000;
@@ -358,6 +375,7 @@ void IN_Commands (void)
 	WPAD_Orientation(WPAD_CHAN_0, &orientation);
 	WPAD_Expansion(WPAD_CHAN_0, &expansion);
 
+	//On screen keyboard
 	if (wiimote_connected && (wpad_keys & WPAD_BUTTON_MINUS))
 	{
 		// ELUTODO: we are using the previous frame wiimote position... FIX IT
@@ -390,7 +408,8 @@ void IN_Commands (void)
 	{
 		// TODO: go back to the old method with buton mappings. The code was a lot cleaner that way
 		in_osk = 0;
-
+		
+//Send the wireless classic controller buttons events
 		if(classic_connected)
 		{
 			if ((wpad_previous_keys & WPAD_CLASSIC_BUTTON_LEFT) != (wpad_keys & WPAD_CLASSIC_BUTTON_LEFT))
@@ -479,6 +498,8 @@ void IN_Commands (void)
 		}
 
 		else
+//Send the wiimote button events if the classic controller is not connected	
+		
 		{
 			if ((wpad_previous_keys & WPAD_BUTTON_LEFT) != (wpad_keys & WPAD_BUTTON_LEFT))
 			{
@@ -539,7 +560,7 @@ void IN_Commands (void)
 				// Send a press event.
 				Key_Event(K_JOY12, ((wpad_keys & WPAD_BUTTON_2) == WPAD_BUTTON_2));
 			}
-	
+//Send nunchunk button events
 			if(nunchuk_connected)
 			{
 				if ((wpad_previous_keys & WPAD_NUNCHUK_BUTTON_C) != (wpad_keys & WPAD_NUNCHUK_BUTTON_C))
@@ -553,9 +574,86 @@ void IN_Commands (void)
 					// Send a press event.
 					Key_Event(K_JOY14, ((wpad_keys & WPAD_NUNCHUK_BUTTON_Z) == WPAD_NUNCHUK_BUTTON_Z));
 				}
+				
+//Emulation of the wimote arrows with the nunchuk stick
+				if(joy_as_arrows.value) 	
+				{
+					const s8 nunchuk_stick_x = WPAD_StickX(0);
+					const s8 nunchuk_stick_y = WPAD_StickY(0);
+					if (nunchuk_stick_x > 10) 
+					{
+						switch (stick_x_st)
+						{
+							
+							case CENTER_X : Key_Event(K_RIGHTARROW, TRUE);break;
+							default : break;
+						
+						}
+					stick_x_st = RIGHT;
+					}
+					
+					else if (nunchuk_stick_x < -10) 
+					{
+						switch (stick_x_st)
+						{
+							case CENTER_X : Key_Event(K_LEFTARROW, TRUE);break;
+							default: break;
+							
+							
+						}
+					stick_x_st = LEFT;
+					}
+					
+					else
+					{
+						switch (stick_x_st)
+						{
+							case LEFT :	Key_Event(K_LEFTARROW, FALSE);break;							
+							case RIGHT: Key_Event(K_RIGHTARROW, FALSE);break;
+							default: break;
+						}
+					stick_x_st = CENTER_X;
+					}
+					
+					if (nunchuk_stick_y > 10) 
+					{
+						switch (stick_y_st)
+						{
+							case CENTER_Y : Key_Event(K_UPARROW, TRUE); break;
+							default: break;	
+							
+						}
+					stick_y_st = UP;
+					}
+					
+					else if (nunchuk_stick_y < -10) 
+					{
+						switch (stick_y_st)
+						{
+							
+							case CENTER_Y : Key_Event(K_DOWNARROW, TRUE);break;
+							default: break;
+						}
+					stick_y_st = DOWN;
+					}
+					
+					
+					else
+					{
+						switch (stick_y_st)
+						{
+							case DOWN :	Key_Event(K_DOWNARROW, FALSE);break;
+							case UP: Key_Event(K_UPARROW, FALSE);break;
+							default: break;
+						}
+					stick_y_st = CENTER_Y;
+					}
+						
+				}	
+				
 			}
 		}
-	
+//Send the gamecube controller button events in the case neither the nunchuk nor the classic controller is connected
 		if(!nunchuk_connected && !classic_connected)
 		{
 			if ((pad_previous_keys & PAD_BUTTON_LEFT) != (pad_keys & PAD_BUTTON_LEFT))
@@ -647,6 +745,7 @@ void IN_Move (usercmd_t *cmd)
 	float y2;
 
 	// TODO: sensor bar position correct? aspect ratio correctly set? etc...
+	// In "pointer" variable there are the IR values
 	int last_wiimote_ir_x = pointer.x;
 	int last_wiimote_ir_y = pointer.y;
 	int wiimote_ir_x = 0, wiimote_ir_y = 0;
@@ -670,9 +769,9 @@ void IN_Move (usercmd_t *cmd)
 		last_iry = wiimote_ir_y;
 		return;
 	}
-
-	if(nunchuk_connected)
-	{
+// Movement management of nunchuk stick (x1/y1) and of IR (x2/y2) if the nunchuk is connected
+	if(nunchuk_connected && !joy_as_arrows.value)
+		{
 		const s8 nunchuk_stick_x = WPAD_StickX(0);
 		const s8 nunchuk_stick_y = WPAD_StickY(0);
 
@@ -680,11 +779,14 @@ void IN_Move (usercmd_t *cmd)
 		y1 = clamp(((float)nunchuk_stick_y / (-128.0f)) * 1.5, -1.0f, 1.0f);
 
 		x2 = clamp((float)wiimote_ir_x / (pointer.vres[0] / 2.0f) - 1.0f, -1.0f, 1.0f);
+		// Move the cross position
 		Cvar_SetValue("cl_crossx", scr_vrect.width / 2 * x2);
 
 		y2 = clamp((float)wiimote_ir_y / (pointer.vres[1] / 2.0f) - 1.0f, -1.0f, 1.0f);
 		Cvar_SetValue("cl_crossy", scr_vrect.height / 2 * y2);
-	}
+		}
+		
+// Movement management of 2 classic controller sticks (x1/y1) and (y1/y2) if the cc is connected
 
 	else if(classic_connected)
 	{
@@ -702,7 +804,7 @@ void IN_Move (usercmd_t *cmd)
 		y2 = clamp(((float)right_stick_y / (-128.0f)) * 1.5, -1.0f, 1.0f);
 		Cvar_SetValue("cl_crossy", (in_mlook.state & 1) ? scr_vrect.height / 2 * y2 : 0);
 	}
-
+// Movement management of 2 gamecube controller sticks (x1/y1) e  (y1/y2) if neither the cc nor nn is connected
 	else
 	{
 		const s8 stick_x = PAD_StickX(0);
@@ -748,20 +850,25 @@ void IN_Move (usercmd_t *cmd)
 	pitch_rate = y2;
 
 	// Move using the main stick.
-	cmd->sidemove += cl_sidespeed.value * x1;
-	cmd->forwardmove -= cl_forwardspeed.value * y1; /* TODO: use cl_backspeed when going backwards? */
-
-	if (in_speed.state & 1)
+	//Send the stick movement commands
+	if (!joy_as_arrows.value)
 	{
-		if (cl_forwardspeed.value > 200)
+		cmd->sidemove += cl_sidespeed.value * x1;
+		cmd->forwardmove -= cl_forwardspeed.value * y1; /* TODO: use cl_backspeed when going backwards? */
+
+		//if the nunchuk c button is pressed it speeds up
+		if (in_speed.state & 1)
 		{
-			cmd->forwardmove /= cl_movespeedkey.value;
-			cmd->sidemove /= cl_movespeedkey.value;
-		}
-		else
-		{
-			cmd->forwardmove *= cl_movespeedkey.value;
-			cmd->sidemove *= cl_movespeedkey.value; /* TODO: always seem to be at the max and I'm too sleepy now to figure out why */
+			if (cl_forwardspeed.value > 200)
+			{
+				cmd->forwardmove /= cl_movespeedkey.value;
+				cmd->sidemove /= cl_movespeedkey.value;
+			}
+			else
+			{
+				cmd->forwardmove *= cl_movespeedkey.value;
+				cmd->sidemove *= cl_movespeedkey.value; /* TODO: always seem to be at the max and I'm too sleepy now to figure out why */
+			}
 		}
 	}
 
@@ -812,7 +919,7 @@ void IN_Move (usercmd_t *cmd)
 		cl.viewangles[PITCH] = -70.0f;
 	}
 
-	if (wiimote_connected && nunchuk_connected)
+	if (wiimote_connected && nunchuk_connected && !joy_as_arrows.value)
 	{
 		in_pitchangle = orientation.pitch;
 		in_yawangle = orientation.yaw;
