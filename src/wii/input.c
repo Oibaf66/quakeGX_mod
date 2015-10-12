@@ -776,7 +776,7 @@ void IN_Move (usercmd_t *cmd)
 		const s8 nunchuk_stick_y = WPAD_StickY(0);
 
 		x1 = clamp(((float)nunchuk_stick_x / 128.0f) * 1.5, -1.0f, 1.0f);
-		y1 = clamp(((float)nunchuk_stick_y / (-128.0f)) * 1.5, -1.0f, 1.0f);
+		y1 = clamp(((float)nunchuk_stick_y / (128.0f)) * 1.5, -1.0f, 1.0f);
 
 		x2 = clamp((float)wiimote_ir_x / (pointer.vres[0] / 2.0f) - 1.0f, -1.0f, 1.0f);
 		// Move the cross position
@@ -797,7 +797,7 @@ void IN_Move (usercmd_t *cmd)
 		const s8 right_stick_y = WPAD_StickY(1);
 
 		x1 = clamp(((float)left_stick_x / 128.0f) * 1.5, -1.0f, 1.0f);
-		y1 = clamp(((float)left_stick_y / (-128.0f)) * 1.5, -1.0f, 1.0f);
+		y1 = clamp(((float)left_stick_y / (128.0f)) * 1.5, -1.0f, 1.0f);
 
 		x2 = clamp(((float)right_stick_x / 128.0f) * 1.5, -1.0f, 1.0f);
 		Cvar_SetValue("cl_crossx", (in_mlook.state & 1) ? scr_vrect.width / 2 * x2 : 0);
@@ -814,7 +814,7 @@ void IN_Move (usercmd_t *cmd)
 		const s8 sub_stick_y = PAD_SubStickY(0);
 
 		x1 = clamp(stick_x / 90.0f, -1.0f, 1.0f);
-		y1 = clamp(stick_y / -90.0f, -1.0f, 1.0f);
+		y1 = clamp(stick_y / 90.0f, -1.0f, 1.0f);
 
 		x2 = clamp(sub_stick_x / 80.0f, -1.0f, 1.0f);
 		Cvar_SetValue("cl_crossx", (in_mlook.state & 1) ? scr_vrect.width / 2 * x2 : 0);
@@ -854,7 +854,8 @@ void IN_Move (usercmd_t *cmd)
 	if (!joy_as_arrows.value)
 	{
 		cmd->sidemove += cl_sidespeed.value * x1;
-		cmd->forwardmove -= cl_forwardspeed.value * y1; /* TODO: use cl_backspeed when going backwards? */
+		if (y1>0) cmd->forwardmove += cl_forwardspeed.value * y1; /* TODO: use cl_backspeed when going backwards? */
+			else cmd->forwardmove += cl_backspeed.value * y1; 
 
 		//if the nunchuk c button is pressed it speeds up
 		if (in_speed.state & 1)
