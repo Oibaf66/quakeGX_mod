@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#define ENABLE_PRINTF 0
+#define LOGFILE 0
 
 #include <sys/unistd.h>
 
@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../generic/quakedef.h"
 
 extern GXRModeObj*	rmode;
+
+FILE *logfile;
 
 static volatile unsigned long	frames = 0;
 
@@ -93,21 +95,28 @@ void Sys_Error (const char *error, ...)
 	Sys_Quit();
 }
 
+void Sys_Init_Logfile(void)
+{
+
+#ifdef LOGFILE	
+ logfile= fopen("/apps/quake/logfile.txt", "w");
+#endif
+}
+
+void Sys_Finish_Logfile(void)
+{
+#ifdef LOGFILE	
+ if (logfile) fclose(logfile);
+#endif
+}
+
 void Sys_Printf (const char *fmt, ...)
 {
-#if ENABLE_PRINTF
-
+#ifdef LOGFILE	
 	va_list args;
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	if (logfile) vfprintf(logfile, fmt, args);
 	va_end(args);
-	
-# if 0
-	for (int i = 0; i < 50; ++i)
-	{
-		VIDEO_WaitVSync();
-	}
-# endif
 #endif
 }
 
@@ -122,6 +131,8 @@ void Sys_Quit (void)
 	}
 
 	VIDEO_SetBlack(TRUE);
+	
+	Sys_Finish_Logfile();
 
 	// Exit.
 	exit(0);
@@ -138,9 +149,12 @@ void Sys_Reset (void)
 	}
 
 	VIDEO_SetBlack(TRUE);
+	
+	Sys_Finish_Logfile();
 
 	// Exit.
-	SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+	//SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+	exit(0);
 }
 
 void Sys_Shutdown (void)
@@ -154,6 +168,8 @@ void Sys_Shutdown (void)
 	}
 
 	VIDEO_SetBlack(TRUE);
+	
+	Sys_Finish_Logfile();
 
 	// Exit.
 	SYS_ResetSystem(SYS_POWEROFF, 0, 0);
@@ -169,7 +185,7 @@ double Sys_FloatTime (void)
 	}
 
 	// ELUTODO
-	if ((rmode == &TVPal528IntDf) || (rmode == &TVPal264Int))
+	if ((rmode->viTVMode >> 2) == VI_PAL) //PAL 50Hz
 	{
 		return frames * (1.0f / 50.0f);
 	}

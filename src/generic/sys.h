@@ -71,3 +71,4 @@ void Sys_SetFPCW (void);
 
 void Sys_Shutdown (void);
 
+void Sys_Init_Logfile(void);

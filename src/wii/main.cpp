@@ -138,7 +138,9 @@ namespace quake
 			KEYBOARD_Init(NULL);
 
 			if(!fatInitDefault())
-				Sys_Error("Error initializing filesystem");
+				printf("Error initializing filesystem\n");
+			
+			Sys_Init_Logfile();
 
 #ifndef DISABLE_WIIMOTE
 			if (WPAD_Init() != WPAD_ERR_NONE)
