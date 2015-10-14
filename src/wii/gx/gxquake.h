@@ -228,6 +228,26 @@ int GL_LoadLightmapTexture (char *identifier, int width, int height, byte *data)
 void GL_UpdateTexture (int pic_id, char *identifier, int width, int height, byte *data, qboolean mipmap, qboolean alpha);
 void GL_UpdateLightmapTextureRegion (int pic_id, int width, int height, int xoffset, int yoffset, byte *data);
 int GL_FindTexture (char *identifier);
+void GL_SubdivideSurface (msurface_t *fa);
+void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+int R_LightPoint (vec3_t p);
+void R_DrawBrushModel (entity_t *e);
+void R_AnimateLight (void);
+void V_CalcBlend (void);
+void R_DrawWorld (void);
+void R_DrawParticles (void);
+void R_DrawWaterSurfaces (void);
+void R_InitParticles (void);
+void GL_Update32 (gltexture_t *destination, u32 *data, int width, int height,  qboolean mipmap, qboolean alpha);
+void R_ClearParticles (void);
+void GL_BuildLightmaps (void);
+void EmitWaterPolys (msurface_t *fa);
+void R_DrawSkyChain (msurface_t *s);
+qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+void R_RotateForEntity (entity_t *e);
+void R_StoreEfrags (efrag_t **ppefrag);
+void GL_Set2D (void);
 
 void GL_DisableMultitexture(void);
 void GL_EnableMultitexture(void);
