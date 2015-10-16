@@ -32,8 +32,8 @@ INCLUDES	:=	$(DEVKITPPC)/libogc/include \
 # Note that we MUST USE -fno-merge-constants, because the compiler generates crap otherwise.
 
 CFLAGS	=		$(MACHDEP) $(INCLUDE) \
-			-g -O2 -Wall -Wcast-align -fno-merge-constants -fno-strict-aliasing -fsingle-precision-constant\
-			-DGXQUAKE
+			-g -O2 -Wall -Wcast-align -Wno-unused-variable -Wno-unused-but-set-variable -fno-merge-constants -fno-strict-aliasing -fsingle-precision-constant\
+			#-ffast-math -funroll-loops
 
 CXXFLAGS = $(CFLAGS) -Weffc++ -fno-exceptions -fno-rtti
 

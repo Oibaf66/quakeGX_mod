@@ -101,6 +101,7 @@ static keyname_t keynames[] =
 	{"MOUSE2", K_MOUSE2},
 	{"MOUSE3", K_MOUSE3},
 
+	{"JOY0", K_JOY0},
 	{"JOY1", K_JOY1},
 	{"JOY2", K_JOY2},
 	{"JOY3", K_JOY3},

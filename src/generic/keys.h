@@ -80,6 +80,7 @@ enum key_id_e
 	// aux keys are for multi-buttoned joysticks to generate so they can use
 	// the normal binding process
 	//
+	K_JOY0,
 	K_JOY1,
 	K_JOY2,
 	K_JOY3,

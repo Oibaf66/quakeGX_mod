@@ -293,8 +293,9 @@ void M_Main_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		key_dest = key_game;
 		m_state = m_none;
 		cls.demonum = m_save_demonum;
@@ -315,8 +316,9 @@ void M_Main_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 
 		switch (m_main_cursor)
@@ -380,8 +382,9 @@ void M_SinglePlayer_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Main_f ();
 		break;
 
@@ -398,8 +401,9 @@ void M_SinglePlayer_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 
 		switch (m_singleplayer_cursor)
@@ -413,12 +417,8 @@ void M_SinglePlayer_Key (int key)
 					"Are you sure you want to\n"
 					"start a new game?\n"
 					"\n"
-					"Y, %s or %s: Yes\n"
-					"N, %s or %s: No\n",
-					Key_KeynumToString(K_JOY1),
-					Key_KeynumToString(K_JOY8),
-					Key_KeynumToString(K_JOY2),
-					Key_KeynumToString(K_JOY9));
+					"Y or button A: Yes\n"
+					"N or button B: No\n");
 				if (!SCR_ModalMessage(message))
 					break;
 			}
@@ -538,14 +538,16 @@ void M_Load_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_SinglePlayer_f ();
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		S_LocalSound ("misc/menu2.wav");
 		if (!loadable[load_cursor])
 			return;
@@ -584,14 +586,16 @@ void M_Save_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_SinglePlayer_f ();
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_state = m_none;
 		key_dest = key_game;
 		Cbuf_AddText (va("save s%i\n", load_cursor));
@@ -655,8 +659,9 @@ void M_MultiPlayer_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Main_f ();
 		break;
 
@@ -673,8 +678,9 @@ void M_MultiPlayer_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 		switch (m_multiplayer_cursor)
 		{
@@ -767,8 +773,9 @@ void M_Setup_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_MultiPlayer_f ();
 		break;
 
@@ -807,8 +814,9 @@ forward:
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		if (setup_cursor == 0 || setup_cursor == 1)
 			return;
 
@@ -978,8 +986,9 @@ again:
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_MultiPlayer_f ();
 		break;
 
@@ -996,8 +1005,9 @@ again:
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 
 		switch (m_net_cursor)
@@ -1038,6 +1048,7 @@ again:
 
 #define	SLIDER_RANGE	10
 
+extern cvar_t	nunchuk_stick_as_arrows;
 int		options_cursor;
 
 void M_Menu_Options_f (void)
@@ -1107,8 +1118,8 @@ void M_AdjustSliders (int dir)
 		}
 		break;
 
-	case 9:	// invert mouse
-		Cvar_SetValue ("m_pitch", -m_pitch.value);
+	case 9:	// Nunchuk stick as arrows
+		Cvar_SetValue ("nunchuk_stick_as_arrows", !nunchuk_stick_as_arrows.value);
 		break;
 
 	case 10:	// lookspring
@@ -1172,7 +1183,7 @@ void M_Options_Draw (void)
 	r = (1.0f - v_gamma.value) / 0.5f;
 	M_DrawSlider (220, 64, r);
 
-	M_Print (16, 72, "           Mouse Speed");
+	M_Print (16, 72, "       Crosshair Speed");
 	r = (sensitivity.value - 1)/10;
 	M_DrawSlider (220, 72, r);
 
@@ -1187,8 +1198,8 @@ void M_Options_Draw (void)
 	M_Print (16, 96, "        Run by Default");
 	M_DrawCheckbox (220, 96, cl_forwardspeed.value > 200);
 
-	M_Print (16, 104, "          Invert Mouse");
-	M_DrawCheckbox (220, 104, m_pitch.value < 0);
+	M_Print (16, 104,"    NK stick as arrows");
+	M_DrawCheckbox (220, 104, nunchuk_stick_as_arrows.value);
 
 	M_Print (16, 112, "            Lookspring");
 	M_DrawCheckbox (220, 112, lookspring.value);
@@ -1208,14 +1219,16 @@ void M_Options_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Main_f ();
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 		switch (options_cursor)
 		{
@@ -1404,7 +1417,7 @@ void M_Keys_Key (int k)
 	if (bind_grab)
 	{	// defining a key
 		S_LocalSound ("misc/menu1.wav");
-		if (k == K_ESCAPE)
+		if ((k == K_ESCAPE) || (k == K_JOY1) || (k == K_JOY10)|| (k == K_JOY21))
 		{
 			bind_grab = FALSE;
 		}
@@ -1421,8 +1434,9 @@ void M_Keys_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Options_f ();
 		break;
 
@@ -1442,9 +1456,10 @@ void M_Keys_Key (int k)
 			keys_cursor = 0;
 		break;
 
-	case K_ENTER:		// go into bind mode
-	case K_JOY1:
-	case K_JOY8:
+	case K_ENTER:   // go into bind mode
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		M_FindKeysForCommand (bindnames[keys_cursor][0], keys);
 		S_LocalSound ("misc/menu2.wav");
 		if (keys[1] != -1)
@@ -1560,14 +1575,16 @@ void M_Options2_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Options_f ();
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		m_entersound = TRUE;
 		switch (options2_cursor)
 		{
@@ -1629,6 +1646,9 @@ void M_Help_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Main_f ();
 		break;
 
@@ -1673,8 +1693,9 @@ void M_Quit_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 	case 'n':
 	case 'N':
 		if (wasInMenus)
@@ -1690,8 +1711,9 @@ void M_Quit_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 	case 'Y':
 	case 'y':
 		key_dest = key_console;
@@ -1718,8 +1740,8 @@ void M_Quit_Draw (void)
 		m_state = m_quit;
 	}
 
-	sprintf(yes, "Y, %s or %s: Yes", Key_KeynumToString(K_JOY1), Key_KeynumToString(K_JOY8));
-	sprintf(no, "N, %s or %s: No", Key_KeynumToString(K_JOY2), Key_KeynumToString(K_JOY9));
+	sprintf(yes, "Y or A button: Yes");
+	sprintf(no, "N or B button: No");
 
 	M_DrawTextBox (56, 76, 24, 4);
 	M_Print (64, 84,  "Really quit?");
@@ -1821,8 +1843,9 @@ void M_LanConfig_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Net_f ();
 		break;
 
@@ -1841,8 +1864,9 @@ void M_LanConfig_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		if (lanConfig_cursor == 0)
 			break;
 
@@ -2331,8 +2355,9 @@ void M_GameOptions_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_Net_f ();
 		break;
 
@@ -2365,8 +2390,9 @@ void M_GameOptions_Key (int key)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		S_LocalSound ("misc/menu2.wav");
 		if (gameoptions_cursor == 0)
 		{
@@ -2515,8 +2541,9 @@ void M_ServerList_Key (int k)
 	switch (k)
 	{
 	case K_ESCAPE:
-	case K_JOY2:
-	case K_JOY9:
+	case K_JOY1:
+	case K_JOY10:
+	case K_JOY21:
 		M_Menu_LanConfig_f ();
 		break;
 
@@ -2541,8 +2568,9 @@ void M_ServerList_Key (int k)
 		break;
 
 	case K_ENTER:
-	case K_JOY1:
-	case K_JOY8:
+	case K_JOY0:
+	case K_JOY9:
+	case K_JOY20:
 		S_LocalSound ("misc/menu2.wav");
 		m_return_state = m_state;
 		m_return_onerror = TRUE;
