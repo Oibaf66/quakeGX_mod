@@ -184,9 +184,11 @@ void shutdown_system(void)
 		
 		void push_back(char *name, int index)
 		{
-			mods_names[index]=(char *) malloc(32);
-			memset(mods_names[index],0,32);
-			strncpy(mods_names[index], name, 31);
+			int len;
+			len = strlen(name);
+			mods_names[index]=(char *) malloc(len+1);
+			memset(mods_names[index],0,len+1);
+			strcpy(mods_names[index], name);
 		}
 		
 		int cstring_cmp(const void *p1, const void *p2)
@@ -247,7 +249,7 @@ void shutdown_system(void)
 
 			closedir(fatdir);
 	
-			if (mod_index>1) qsort(mods_names+1, mod_index-1, sizeof(char *), cstring_cmp);
+			if (mod_index>2) qsort(mods_names+1, mod_index-1, sizeof(char *), cstring_cmp);
 
 			while (1)
 			{
