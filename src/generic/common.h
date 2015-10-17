@@ -27,13 +27,10 @@ typedef unsigned char 		byte;
 #undef true
 #undef false
 
-#ifdef __cplusplus
-typedef enum {qfalse, qtrue}	qboolean;
-#else
-	// libogc
-	#include <gctypes.h>
-	typedef bool qboolean;
-#endif
+// libogc
+#include <gctypes.h>
+typedef bool qboolean;
+
 
 //============================================================================
 

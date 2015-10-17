@@ -30,13 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define USBGECKO_DEBUG		0
 #define WIFI_DEBUG			0
 
-// Standard includes.
-#include <cstdio>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <algorithm>
-
 // OGC includes.
 #include <ogc/lwp.h>
 #include <ogc/lwp_mutex.h>
@@ -51,8 +44,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <debug.h>
 #endif
 
-extern "C"
-{
 #include <sys/stat.h>
 #include <sys/dir.h>
 #include <unistd.h>
@@ -63,7 +54,6 @@ u32 MALLOC_MEM2 = 0;
 
 extern void Sys_Reset(void);
 extern void Sys_Shutdown(void);
-}
 
 // Video globals.
 void		*framebuffer[2]		= {NULL, NULL};
@@ -432,7 +422,7 @@ void shutdown_system(void)
 			}
 		}
 
-		static void* main_thread_function(void*)
+		static void* main_thread_function(void* dummy)
 		{
 			u32 level, real_heap_size;
 
@@ -519,7 +509,7 @@ void shutdown_system(void)
 		}
 
 
-qboolean isDedicated = qfalse;
+qboolean isDedicated = FALSE;
 
 int main(int argc, char* argv[])
 {

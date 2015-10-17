@@ -33,9 +33,9 @@ INCLUDES	:=	$(DEVKITPPC)/libogc/include \
 
 CFLAGS	=		$(MACHDEP) $(INCLUDE) \
 			-g -O2 -Wall -Wcast-align -Wno-unused-variable -Wno-unused-but-set-variable -fno-merge-constants -fno-strict-aliasing -fsingle-precision-constant\
-			#-ffast-math -funroll-loops
+			#-DLOGFILE
 
-CXXFLAGS = $(CFLAGS) -Weffc++ -fno-exceptions -fno-rtti
+CXXFLAGS = $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
