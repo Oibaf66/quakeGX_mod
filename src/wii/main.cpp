@@ -87,10 +87,6 @@ void shutdown_system(void)
 	want_to_shutdown = 1;
 }
 
-namespace quake
-{
-	namespace main
-	{
 		// Set up the heap.
 		static size_t	heap_size	= 19 * 1024 * 1024;
 		static char		*heap;
@@ -194,6 +190,20 @@ namespace quake
 			parms_ptr += strlen(parm) + 1;
 		}
 
+		char *mods_names[64];
+		
+		void push_back(char *name, int index)
+		{
+			mods_names[index]=(char *) malloc(32);
+			memset(mods_names[index],0,32);
+			strncpy(mods_names[index], name, 31);
+		}
+		
+		int cstring_cmp(const void *p1, const void *p2)
+		{
+			return strcmp(*(char * const *)p1, *(char * const *)p2);
+		}
+		
 		void frontend(void)
 		{
 
@@ -207,21 +217,21 @@ namespace quake
 			int heap_memory = 19;
 			// option 1
 			u32 mods_selected = 0;
-			std::vector<std::string> mods_names;
-
+			
 			// option 2
 			u32 network_enable = 0;
 
 			// option 3
 			u32 listen_players = 4;
 
-			// find mods / mission packs, some code from snes9x-gx 1.51
-			mods_names.push_back("0 None"); //To be sure that None is at fisrt place in the list
+			// find mods / mission packs
+			push_back("None", 0); 
 
 			DIR *fatdir;
 			struct dirent *dir;
 			struct stat filestat;
 			char filename[128];
+			int mod_index=1;
 
 			fatdir = opendir(QUAKE_WII_BASEDIR);
 			if (!fatdir)
@@ -240,13 +250,14 @@ namespace quake
 					else if(!strcasecmp(dir->d_name, "rogue"))
 						missionpack_have |= 4;
 					else
-						mods_names.push_back(dir->d_name);
+						{if ((mod_index<63)&&(strlen(dir->d_name)<32)); push_back(dir->d_name, mod_index); mod_index++;}
 				}
 			}
+			mods_names[mod_index]= NULL;
 
 			closedir(fatdir);
 	
-			sort(mods_names.begin(), mods_names.end());
+			if (mod_index>1) qsort(mods_names+1, mod_index-1, sizeof(char *), cstring_cmp);
 
 			while (1)
 			{
@@ -264,7 +275,6 @@ namespace quake
 
 				printf("\x1b[2;0H");
 				// ELUTODO: use CONF module to configure certain settings according to the wii's options
-				//printf("\n\n\n\n\n\n     If the Nunchuk isn't detected, please reconnect it to the wiimote.\n     Oh, and don't forget to put your wrist wrap! :)\n\n");
 
 				if (up)
 					cursor = (cursor - 1 + cursor_modulus) % cursor_modulus;
@@ -278,7 +288,7 @@ namespace quake
 							missionpack_selected = (missionpack_selected - 1 + 3) % 3;
 							break;
 						case 1:
-							mods_selected = (mods_selected - 1 + mods_names.size()) % mods_names.size();
+							mods_selected = (mods_selected - 1 + mod_index) % mod_index;
 							break;
 						case 2:
 							heap_memory--;
@@ -311,7 +321,7 @@ namespace quake
 							missionpack_selected = (missionpack_selected + 1) % 3;
 							break;
 						case 1:
-							mods_selected = (mods_selected + 1) % mods_names.size();
+							mods_selected = (mods_selected + 1) % mod_index;
 							break;
 						case 2:
 							if ((heap_memory < 35)&&(heap_memory+texture_memory<51))
@@ -350,8 +360,7 @@ namespace quake
 
 				const u32 mods_maxprintsize = 32;
 				char mods_printvar[mods_maxprintsize];
-				if (!strcmp(mods_names[mods_selected].c_str(),"0 None")) strncpy(mods_printvar, mods_names[mods_selected].c_str()+2, mods_maxprintsize);
-				else strncpy(mods_printvar, mods_names[mods_selected].c_str(), mods_maxprintsize);
+				strncpy(mods_printvar, mods_names[mods_selected], mods_maxprintsize);
 				size_t mods_printsize = strlen(mods_printvar);
 				u32 i;
 
@@ -404,9 +413,11 @@ namespace quake
 			if (mods_selected)
 			{
 				add_parm("-game");
-				add_parm(mods_names[mods_selected].c_str()); // ELUTODO: bad thing to do?
+				add_parm(mods_names[mods_selected]); // ELUTODO: bad thing to do?
 			}
-
+			
+			for(mod_index=0;  mods_names[mod_index]!= NULL; mod_index++)
+				free(mods_names[mod_index]);
 
 			if (!network_enable)
 			{
@@ -506,11 +517,7 @@ namespace quake
 			Sys_Quit();
 			return 0;
 		}
-	}
-}
 
-using namespace quake;
-using namespace quake::main;
 
 qboolean isDedicated = qfalse;
 
