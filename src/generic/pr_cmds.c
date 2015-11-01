@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ===============================================================================
 */
 
-extern u64 time_wpad_off_millisec;
+extern double time_wpad_off;
 extern int rumble_on;
 extern cvar_t  rumble;
 
@@ -1850,13 +1850,13 @@ added for wii rumble
 void PF_rumble (void)
 {
 	if (!rumble.value) return;
-	u64 rumble_time;
-	rumble_time = G_FLOAT(OFS_PARM0);
+	double rumble_time;
+	rumble_time = G_FLOAT(OFS_PARM0) / 1000.0;
 	
 	//it switches rumble on for rumble_time milliseconds  
 	WPAD_Rumble(0, TRUE);
 	rumble_on=1;
-	time_wpad_off_millisec	= ticks_to_millisecs(gettime()) + rumble_time;
+	time_wpad_off = Sys_FloatTime() + rumble_time;
 	
 }
 

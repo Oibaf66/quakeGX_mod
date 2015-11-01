@@ -63,8 +63,8 @@ GXRModeObj	*rmode			= 0;
 int want_to_reset = 0;
 int want_to_shutdown = 0;
 int texture_memory = 30;
-u64 time_wpad_off_millisec = 0;
-u64 current_time;
+double time_wpad_off = 0;
+double current_time = 0;
 int rumble_on = 0;
 
 void reset_system(void)
@@ -477,7 +477,10 @@ void shutdown_system(void)
 			VIDEO_SetBlack(FALSE);
 
 			// Run the main loop.
-			u64 last_time = gettime();
+			double current_time, last_time, seconds;
+			
+			last_time = Sys_FloatTime ();
+			
 			for (;;)
 			{
 				if (want_to_reset)
@@ -486,16 +489,14 @@ void shutdown_system(void)
 					Sys_Shutdown();
 
 				// Get the frame time in ticks.
-				const u64		current_time	= gettime();
-				const u64		time_delta		= current_time - last_time;
-				const double	seconds	= time_delta * (0.001f / TB_TIMER_CLOCK);
+				current_time = Sys_FloatTime ();
+				seconds	= current_time - last_time;
 				last_time = current_time;
 				
-				const u64 current_time_millisec = ticks_to_millisecs(current_time);
 				//Con_Printf ("time: %f \n", current_time_millisec);
 				//Con_Printf ("time off: %f \n", time_wpad_off_millisec);
 				
-				if (rumble_on&&(current_time_millisec > time_wpad_off_millisec)) 
+				if (rumble_on&&(current_time > time_wpad_off)) 
 				{
 					WPAD_Rumble(0, FALSE);
 					rumble_on = 0;

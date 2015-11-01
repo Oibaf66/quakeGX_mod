@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <ogc/pad.h>
 #include <ogc/system.h>
 #include <ogc/video.h>
+#include <ogc/lwp_watchdog.h>
 #include <sys/stat.h>
 #include <wiiuse/wpad.h>
 #include <errno.h>
@@ -37,13 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern GXRModeObj*	rmode;
 
 FILE *logfile;
-
-static volatile unsigned long	frames = 0;
-
-static void increment_frame_counter(u32 nothing)
-{
-	++frames;
-}
 
 void Sys_Error (const char *error, ...)
 {
@@ -175,24 +169,20 @@ void Sys_Shutdown (void)
 	SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 }
 
+//Current time in seconds
 double Sys_FloatTime (void)
 {
-	static bool init = FALSE;
-	if (!init)
-	{
-		VIDEO_SetPreRetraceCallback(increment_frame_counter);
-		init = TRUE;
-	}
+	static u64	base;
+	static qboolean	initialized = FALSE;
+	u64 ms;
 
-	// ELUTODO
-	if ((rmode->viTVMode >> 2) == VI_PAL) //PAL 50Hz
+	ms = ticks_to_millisecs(gettime());
+	if (!initialized)
 	{
-		return frames * (1.0f / 50.0f);
+		base = ms;
+		initialized = TRUE;
 	}
-	else
-	{
-		return frames * (1.0f / 60.0f);
-	}
+	return ((double)(ms - base)) / 1000.0;
 }
 
 char *Sys_ConsoleInput (void)
