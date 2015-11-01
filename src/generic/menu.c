@@ -1044,7 +1044,7 @@ again:
 //=============================================================================
 /* OPTIONS MENU */
 
-#define	OPTIONS_ITEMS	13
+#define	OPTIONS_ITEMS	11
 
 #define	SLIDER_RANGE	10
 
@@ -1121,14 +1121,6 @@ void M_AdjustSliders (int dir)
 	case 9:	// Nunchuk stick as arrows
 		Cvar_SetValue ("nunchuk_stick_as_arrows", !nunchuk_stick_as_arrows.value);
 		break;
-
-	case 10:	// lookspring
-		Cvar_SetValue ("lookspring", !lookspring.value);
-		break;
-
-	case 11:	// lookstrafe
-		Cvar_SetValue ("lookstrafe", !lookstrafe.value);
-		break;
 	}
 }
 
@@ -1201,13 +1193,7 @@ void M_Options_Draw (void)
 	M_Print (16, 104,"    NK stick as arrows");
 	M_DrawCheckbox (220, 104, nunchuk_stick_as_arrows.value);
 
-	M_Print (16, 112, "            Lookspring");
-	M_DrawCheckbox (220, 112, lookspring.value);
-
-	M_Print (16, 120, "            Lookstrafe");
-	M_DrawCheckbox (220, 120, lookstrafe.value);
-
-	M_Print (16, 128, "          More Options");
+	M_Print (16, 112, "          More Options");
 
 // cursor
 	M_DrawCharacter (200, 32 + options_cursor*8, 12+((int)(realtime*4)&1));
@@ -1242,7 +1228,7 @@ void M_Options_Key (int k)
 		case 2:
 			Cbuf_AddText ("exec default.cfg\n");
 			break;
-		case 12:
+		case 10:
 			M_Menu_Options2_f ();
 			break;
 		default:
